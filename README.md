@@ -1,2 +1,2 @@
-# AnimeDB-Assistant
-AnimeDB Assistant is a natural langauage interface for querying anime data using SQL and LLMs
+# SecureQuery
+SecureQuery is a natural language interface for analyzing cybersecurity logs using SQL and LLMs, with built-in validation to ensure safe query execution.
