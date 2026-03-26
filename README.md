@@ -12,6 +12,8 @@ The system is designed with a strong focus on security, ensureing that only safe
 
 ## Architecture
 
+![SecureQuery Architecture](module_architecture.png)
+
 The system is composed of several key components:
 
 - **CLI Interface** – Entry point for user input
