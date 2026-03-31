@@ -1,10 +1,11 @@
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "data" / "securequery.db"
+#default location of the database inside the project 
+DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "securequery.db"
 
-def getconnection(db_path: str = None) -> sqlite3.Connection:
-    path = db_path or DB_PATH
-    conn = sqlite3.connect(path)
-    conn.row_factory = sqlite3.Row
-    return conn
+def getconnection(db_path: str = None):
+    database_path = db_path or DEFAULT_DB_PATH
+    connnection = sqlite3.connect(database_path)
+    connnection.row_factory = sqlite3.Row
+    return connnection
