@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Add project root to path so imports work when running from any directory
+# lets imports work even if the file is run from another folder
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.query_service import QueryService
@@ -22,15 +22,10 @@ def print_menu():
     print("=" * 40)
 
 
-def handle_load_csv(qs: QueryService):
-    """
-    Prompt the user for a CSV path and table name,
-    then load it into the database via QueryService.
-    """
+def handle_load_csv(qs):
     print()
     csv_path = input("Enter path to CSV file: ").strip()
 
-    # Check the file actually exists before trying to load it
     if not os.path.exists(csv_path):
         print(f"  Error: File not found — '{csv_path}'")
         return
@@ -40,14 +35,18 @@ def handle_load_csv(qs: QueryService):
         print("  Error: Table name cannot be empty.")
         return
 
-    # Ask how to handle conflicts if the table already exists
     print("  If table already exists:")
     print("    a. append   — add rows if schema matches")
     print("    b. replace  — clear and reload")
     print("    c. skip     — do nothing")
     choice = input("  Choose (a/b/c) [default: a]: ").strip().lower()
 
-    conflict_map = {"a": "append", "b": "replace", "c": "skip", "": "append"}
+    conflict_map = {
+        "a": "append", 
+        "b": "replace", 
+        "c": "skip", 
+        "": "append"
+        }
     on_conflict = conflict_map.get(choice, "append")
 
     try:
@@ -61,15 +60,7 @@ def handle_load_csv(qs: QueryService):
         print(f"  Unexpected error: {e}")
 
 
-def handle_ask_question(qs: QueryService, adapter: LLMAdapter):
-    """
-    Take a natural language question from the user,
-    generate SQL via the LLM adapter, validate it,
-    execute it, and display the results.
-
-    The CLI never touches the database directly —
-    everything goes through QueryService.
-    """
+def handle_ask_question(qs, adapter):
     print()
 
     # Make sure there are tables to query before asking
@@ -86,18 +77,14 @@ def handle_ask_question(qs: QueryService, adapter: LLMAdapter):
     print("  Generating SQL...")
 
     try:
-        # Step 1 — get schema for the LLM prompt
         schema = qs.get_schema()
-
-        # Step 2 — translate natural language to SQL
         sql = adapter.generate_sql(question, schema)
+
         print(f"  Generated SQL: {sql}")
         print()
 
-        # Step 3 — validate and execute via QueryService
         rows = qs.execute_query(sql)
 
-        # Step 4 — display results
         if not rows:
             print("  No results found.")
             return
@@ -106,7 +93,7 @@ def handle_ask_question(qs: QueryService, adapter: LLMAdapter):
         print()
 
 
-        # Print each row — limit to 20 rows to keep output readable
+        # only show first 20 rows so output does not get messy
         for row in rows[:20]:
             print("  " + " | ".join(f"{str(v):<20}" for v in row))
 
@@ -121,17 +108,15 @@ def handle_ask_question(qs: QueryService, adapter: LLMAdapter):
         print(f"  Error: {e}")
 
 
-def handle_list_tables(qs: QueryService):
-    """
-    Display all tables in the database and their columns.
-    Uses SchemaManager via QueryService — CLI never queries DB directly.
-    """
+def handle_list_tables(qs):
     print()
     schema = qs.get_schema()
 
-    # Filter out SQLite internal tables
-    user_tables = {k: v for k, v in schema.items()
-                   if k != "sqlite_sequence"}
+    user_tables = {
+        table_name: columns
+        for table_name, columns in schema.items()
+        if table_name != "sqlite_sequence"
+    }
 
     if not user_tables:
         print("  No tables loaded yet. Please load a CSV first (option 1).")
@@ -144,30 +129,8 @@ def handle_list_tables(qs: QueryService):
         print()
 
 
-def _get_main_table(sql: str, schema: dict) -> str:
-    """
-    Extract the first table name from a SQL query that exists in the schema.
-    Used to get column headers for display.
-    Returns empty string if no match found.
-    """
-    import re
-    matches = re.findall(r'\bFROM\s+(\w+)', sql, re.IGNORECASE)
-    for match in matches:
-        if match.lower() in schema:
-            return match.lower()
-    return ""
-
 
 def main():
-    """
-    Main entry point for the SecureQuery CLI.
-
-    Creates a QueryService and LLMAdapter, then runs an
-    input loop until the user chooses to exit.
-
-    The CLI is always the last module to be built — it depends
-    on all other modules being complete and working.
-    """
     print()
     print("  Welcome to DataQuery-Engine")
     print("  Natural language interface for data")
