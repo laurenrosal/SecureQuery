@@ -1,0 +1,17 @@
+# API keys — never commit
+config.py
+
+# Database files — regenerated from CSV
+data/*.db
+
+# Large data files
+data/*.csv
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# VS Code
+.vscode/
